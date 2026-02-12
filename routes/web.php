@@ -22,7 +22,8 @@ Route::get('/welcome', function () {
 });
 
 // 3. 認証が必要なルートグループ
-Route::middleware(['auth', 'verified'])->group(function () {
+// 'prevent-back' ミドルウェアを追加し、ログアウト後の戻るボタンでの閲覧を防止します
+Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // --- スケジュール関連 ---
     // カレンダー表示 (index)
