@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\UserController; // ユーザー管理用
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -11,31 +11,43 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// 1. トップページにアクセスしたらスケジュール（カレンダー）にリダイレクト
+// 1. トップページにアクセスしたらスケジュールにリダイレクト
 Route::get('/', function () {
     return redirect()->route('schedules.index');
 });
 
-// 2. 標準のウェルカムページ（必要なければ削除可）
+// 2. 標準のウェルカムページ
 Route::get('/welcome', function () {
     return view('welcome');
 });
 
 // 3. 認証が必要なルートグループ
-// 'prevent-back' ミドルウェアを追加し、ログアウト後の戻るボタンでの閲覧を防止します
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
-    // --- スケジュール関連 ---
-    // カレンダー表示 (index)
-    Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.index');
-    // 新規作成画面 (create)
-    Route::get('/schedules/create', [ScheduleController::class, 'create'])->name('schedules.create');
-    // その他のリソースルート（store, edit, update, destroy）
-    Route::resource('schedules', ScheduleController::class)->except(['index', 'create']);
+    /**
+     * --- スケジュール関連 ---
+     * 全てのパスを /schedule/schedule に統一します
+     */
+    Route::prefix('schedule')->group(function () {
 
-    // スケジュール固有のカスタム操作
-    Route::patch('/schedules/{schedule}/toggle', [ScheduleController::class, 'toggle'])->name('schedules.toggle');
-    Route::patch('/schedules/{schedule}/update-date', [ScheduleController::class, 'updateDate'])->name('schedules.updateDate');
+        // 一覧表示: GET /schedule
+        Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
+
+        // 保存処理をリソースより前に明示的に定義: POST /schedule/schedule
+        Route::post('/schedule', [ScheduleController::class, 'store'])->name('schedules.store');
+
+        // その他のリソースルート
+        Route::resource('schedule', ScheduleController::class)->except(['index', 'store'])->names([
+            'create'  => 'schedules.create',
+            'edit'    => 'schedules.edit',
+            'update'  => 'schedules.update',
+            'destroy' => 'schedules.destroy',
+        ]);
+
+        // カスタム操作
+        Route::patch('/schedule/{schedule}/toggle', [ScheduleController::class, 'toggle'])->name('schedules.toggle');
+        Route::patch('/schedule/{schedule}/update-date', [ScheduleController::class, 'updateDate'])->name('schedules.updateDate');
+    });
 
     // --- プロフィール関連 ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -43,18 +55,17 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // --- 管理者専用ルート ---
-    // Gate 'admin' を持っているユーザーのみアクセス可能
     Route::middleware(['can:admin'])->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::patch('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.updateRole');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
 
-    // ダッシュボード（Breeze標準。schedulesに統合した場合は削除してもOK）
+    // ダッシュボード
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
 });
 
-// 4. 認証関連のルート（Breeze）を読み込み
+// 4. 認証関連のルート
 require __DIR__ . '/auth.php';

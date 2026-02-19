@@ -38,7 +38,7 @@
             </div>
 
             <div class="flex justify-between items-center">
-                <a href="/schedules" class="text-gray-500 text-sm">キャンセル</a>
+                <a href="{{ route('schedules.index') }}" class="text-gray-500 text-sm">キャンセル</a>
                 <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
                     更新する
                 </button>

@@ -26,7 +26,7 @@
                     </button>
                 </form>
             </div>
-            <a href="/schedules?{{ request('category') ? 'category='.request('category') : '' }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow">カレンダーへ戻る</a>
+            <a href="{{ route('schedules.index') }}?{{ request('category') ? 'category='.request('category') : '' }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow">カレンダーへ戻る</a>
         </div>
 
         <form action="{{ url()->current() }}" method="GET" class="flex gap-2 mb-6 bg-white p-3 rounded-lg shadow border">

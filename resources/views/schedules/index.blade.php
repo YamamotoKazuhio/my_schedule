@@ -29,8 +29,8 @@
                 </form>
             </div>
             <div class="flex gap-2">
-                <a href="/schedules?view=list{{ request('category') ? '&category='.request('category') : '' }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition">リスト表示</a>
-                <a href="/schedules/create?date={{ date('Y-m-d') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">+ 新規予定</a>
+                <a href="{{ route('schedules.index', ['view' => 'list'] + (request('category') ? ['category' => request('category')] : [])) }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition">リスト表示</a>
+                <a href="{{ route('schedules.create') }}?date={{ date('Y-m-d') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">+ 新規予定</a>
             </div>
         </div>
 
@@ -108,9 +108,9 @@
                     month: '月',
                     week: '週'
                 },
-                dateClick: (info) => window.location.href = '/schedules/create?date=' + info.dateStr,
+                dateClick: (info) => window.location.href = '{{ route("schedules.create") }}?date=' + info.dateStr,
                 eventDrop: function(info) {
-                    fetch(`/schedules/${info.event.id}/update-date`, {
+                    fetch(`{{ url('schedules') }}/${info.event.id}/update-date`, {
                         method: 'PATCH',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
