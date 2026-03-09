@@ -42,6 +42,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+	//return redirect('http://52.196.215.231/');
+	
+	$baseUrl = $request->server('APP_GLOBAL_BASE_URL', 'http://52.196.215.231');
+	return redirect($baseUrl . '/');
     }
 }

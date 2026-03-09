@@ -11,43 +11,28 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// 1. トップページにアクセスしたらスケジュールにリダイレクト
+// 1. 公開ルート: /schedule に来たら一覧へ飛ばす
 Route::get('/', function () {
     return redirect()->route('schedules.index');
 });
 
-// 2. 標準のウェルカムページ
 Route::get('/welcome', function () {
     return view('welcome');
 });
 
-// 3. 認証が必要なルートグループ
+// 2. 認証が必要なルートグループ
 Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     /**
      * --- スケジュール関連 ---
-     * 全てのパスを /schedule/schedule に統一します
+     * resource の第一引数を 'schedules' に明示することで、
+     * URLを /schedule/schedules に固定し、404を回避します。
      */
-    Route::prefix('schedule')->group(function () {
-
-        // 一覧表示: GET /schedule
-        Route::get('/', [ScheduleController::class, 'index'])->name('schedules.index');
-
-        // 保存処理をリソースより前に明示的に定義: POST /schedule/schedule
-        Route::post('/schedule', [ScheduleController::class, 'store'])->name('schedules.store');
-
-        // その他のリソースルート
-        Route::resource('schedule', ScheduleController::class)->except(['index', 'store'])->names([
-            'create'  => 'schedules.create',
-            'edit'    => 'schedules.edit',
-            'update'  => 'schedules.update',
-            'destroy' => 'schedules.destroy',
-        ]);
-
-        // カスタム操作
-        Route::patch('/schedule/{schedule}/toggle', [ScheduleController::class, 'toggle'])->name('schedules.toggle');
-        Route::patch('/schedule/{schedule}/update-date', [ScheduleController::class, 'updateDate'])->name('schedules.updateDate');
-    });
+    Route::patch('schedules/{schedule}/toggle', [ScheduleController::class, 'toggle'])->name('schedules.toggle');
+    Route::patch('schedules/{schedule}/update-date', [ScheduleController::class, 'updateDate'])->name('schedules.updateDate');
+    
+    // リソースルートを一括定義（以前のバラバラな定義を統合）
+    Route::resource('schedules', ScheduleController::class);
 
     // --- プロフィール関連 ---
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -63,9 +48,9 @@ Route::middleware(['auth', 'verified', 'prevent-back'])->group(function () {
 
     // ダッシュボード
     Route::get('/dashboard', function () {
-        return view('dashboard');
+        return redirect()->route('schedules.index');
     })->name('dashboard');
 });
 
-// 4. 認証関連のルート
+// 3. 認証関連
 require __DIR__ . '/auth.php';

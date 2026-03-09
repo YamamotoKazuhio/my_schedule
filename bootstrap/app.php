@@ -15,6 +15,10 @@ return Application::configure(dirname(__DIR__))
         $middleware->alias([
             'prevent-back' => \App\Http\Middleware\PreventBackHistory::class,
         ]);
+	    $middleware->redirectTo(
+            guests: '/login', // 未ログイン時の転送先（/schedule/login になる）
+            users: '/'        // ログイン済みの時の転送先（/schedule/ になる）
+	       );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

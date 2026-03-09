@@ -106,39 +106,50 @@ class ScheduleController extends Controller
     }
 
     public function store(Request $request)
-    {
-        // repeat_count に上限(例: 52回)を設けて負荷対策
-        $validated = $request->validate([
-            'title' => 'required|max:255', 
-            'date' => 'required|date',
-            'category' => 'nullable|string',
-            'description' => 'nullable|string',
-            'repeat_type' => 'nullable|in:none,daily,weekly,monthly',
-            'repeat_count' => 'nullable|integer|min:1|max:52',
-        ]);
+{
+    // 1. バリデーション（ここは変更なし。max:52 が効いています）
+    $validated = $request->validate([
+        'title' => 'required|max:255', 
+        'date' => 'required|date',
+        'category' => 'nullable|string',
+        'description' => 'nullable|string',
+        'repeat_type' => 'nullable|in:none,daily,weekly,monthly',
+        'repeat_count' => 'nullable|integer|min:1|max:52',
+    ]);
 
-        $repeatType = $request->input('repeat_type', 'none');
-        $repeatCount = $repeatType === 'none' ? 1 : (int)$request->input('repeat_count', 1);
-        $startDate = Carbon::parse($validated['date']);
+    // 2. 繰り返し回数の確定（$validated から取得するように変更）
+    $repeatType = $validated['repeat_type'] ?? 'none';
+    
+    // repeat_type が none でない場合のみ、入力された回数を採用する
+    $repeatCount = ($repeatType === 'none') ? 1 : (int)($validated['repeat_count'] ?? 1);
 
-        for ($i = 0; $i < $repeatCount; $i++) {
-            $currentDate = $startDate->copy();
-            if ($repeatType === 'daily') $currentDate->addDays($i);
-            elseif ($repeatType === 'weekly') $currentDate->addWeeks($i);
-            elseif ($repeatType === 'monthly') $currentDate->addMonths($i);
+    $startDate = Carbon::parse($validated['date']);
 
-            Schedule::create([
-                'user_id' => Auth::id(),
-                'title' => $validated['title'],
-                'date' => $currentDate->format('Y-m-d'),
-                'description' => $validated['description'] ?? null,
-                'category' => $validated['category'] ?? 'work',
-                'is_completed' => false,
-            ]);
+    // 3. ループ処理
+    for ($i = 0; $i < $repeatCount; $i++) {
+        $currentDate = $startDate->copy();
+
+        // 加算処理（$i を使って正しく日付をずらす）
+        if ($repeatType === 'daily') {
+            $currentDate->addDays($i);
+        } elseif ($repeatType === 'weekly') {
+            $currentDate->addWeeks($i);
+        } elseif ($repeatType === 'monthly') {
+            $currentDate->addMonths($i);
         }
 
-       return redirect()->route('schedules.index')->with('success', '予定を登録しました。');
+        Schedule::create([
+            'user_id' => Auth::id(),
+            'title' => $validated['title'],
+            'date' => $currentDate->format('Y-m-d'),
+            'description' => $validated['description'] ?? null,
+            'category' => $validated['category'] ?? 'work',
+            'is_completed' => false,
+        ]);
     }
+
+    return redirect()->route('schedules.index')->with('success', '予定を登録しました。');
+}
 
     public function edit(Schedule $schedule)
     {
